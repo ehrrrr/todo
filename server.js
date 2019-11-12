@@ -7,12 +7,25 @@ app.use(express.static('public'));
 
 const mongodb = require('mongodb');
 const connectionString = 'mongodb+srv://todoAppUser:p@§§w0rd@cluster0-ve6hd.mongodb.net/TodoApp?retryWrites=true&w=majority';
+const sanitizeHtml = require('sanitize-html');
 let db;
 
 mongodb.connect(connectionString, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, client) {
     db = client.db();
     app.listen(3000, () => console.log('info', 'Server is running at port: ' + 3000));
 });
+
+function passwordProtected(req, res, next) {
+    res.set('WWW-Authenticate', 'Basic realm="Simple Todo App"');
+    console.log(req.headers.authorization)
+    if(req.headers.authorization == "Basic aGVsbG86aGVsbG8=") {
+        next();
+    } else {
+        res.status(401).send("Authentication required!");
+    }
+}
+
+app.use(passwordProtected);
 
 app.get('/', (req, res) => {
     db.collection('items').find().toArray(function(err, items){
@@ -37,7 +50,7 @@ app.get('/', (req, res) => {
                 </div>
                 
                 <ul id="item-list" class="list-group pb-5">
-                    
+
                 </ul>
                 
             </div>
@@ -52,20 +65,22 @@ app.get('/', (req, res) => {
 })
 
 app.post('/create-item', function(req, res) {
+    const safeText = sanitizeHtml(req.body.text, {allowedTags: [], allowedAttributes: {}});
     db.collection('items').insertOne({
-        text: req.body.text
+        text: safeText
     }, function (err, info) {
         res.json(info.ops[0]);
     })
 })
 
 app.post('/update-item', function(req, res){
+    const safeText = sanitizeHtml(req.body.text, {allowedTags: [], allowedAttributes: {}});
     db.collection('items').findOneAndUpdate(
         {
             _id: new mongodb.ObjectID(req.body.id)
         }, 
         {
-            $set: {text: req.body.text}
+            $set: {text: safeText}
         }, 
         function() {
             res.send('Success');
