@@ -9,10 +9,11 @@ const mongodb = require('mongodb');
 const connectionString = 'mongodb+srv://todoAppUser:p@§§w0rd@cluster0-ve6hd.mongodb.net/TodoApp?retryWrites=true&w=majority';
 const sanitizeHtml = require('sanitize-html');
 let db;
+let port = process.env.PORT || 3000;
 
 mongodb.connect(connectionString, {useNewUrlParser: true, useUnifiedTopology: true}, function(err, client) {
     db = client.db();
-    app.listen(3000, () => console.log('info', 'Server is running at port: ' + 3000));
+    app.listen(port, () => console.log('info', 'Server is running at port: ' + 3000));
 });
 
 function passwordProtected(req, res, next) {
